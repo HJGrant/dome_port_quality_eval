@@ -8,17 +8,17 @@ from matplotlib.widgets import RectangleSelector
 
 # Global variables for cropping
 cropping_coordinates = None
+reference_image = None
 reference_image_path = None
 compare_images_folder = None
 output_folder = None
 
-def select_rectangle(eclick, erelease):
+def onselect(eclick, erelease):
     """Callback function for rectangle selection."""
     global cropping_coordinates
     x1, y1 = int(eclick.xdata), int(eclick.ydata)
     x2, y2 = int(erelease.xdata), int(erelease.ydata)
     cropping_coordinates = (min(x1, x2), min(y1, y2), max(x1, x2), max(y1, y2))
-
 
 def save_cropped_images(cropping_coordinates):
     """Crop and save images based on selected region."""
@@ -27,6 +27,11 @@ def save_cropped_images(cropping_coordinates):
 
     x1, y1, x2, y2 = cropping_coordinates
     cropped_reference = reference_image[y1:y2, x1:x2]
+
+    # Save the cropped reference image
+    cropped_reference_path = os.path.join(output_folder, "cropped_reference.png")
+    cv2.imwrite(cropped_reference_path, cv2.cvtColor(cropped_reference, cv2.COLOR_RGB2BGR))
+    print(f"Cropped reference image saved at: {cropped_reference_path}")
 
     metrics = []
     float_values = []
@@ -49,15 +54,28 @@ def save_cropped_images(cropping_coordinates):
         if float_value is not None:
             float_values.append(float_value)
 
+        min_dim = min(cropped_reference.shape[0], cropped_reference.shape[1], 
+                    cropped_compare.shape[0], cropped_compare.shape[1])
+
+        # Set the window size to be the largest odd number <= min_dim
+        win_size = min(7, min_dim)  # Default win_size is 7, but reduce if needed
+
+        # Ensure win_size is odd and less than min_dim
+        if win_size % 2 == 0:
+            win_size -= 1
+
+        print(f"Cropped Reference Shape: {cropped_reference.shape}")
+        print(f"Cropped Compare Shape: {cropped_compare.shape}")
+        print(f"Computed win_size: {win_size}")
+
         # Compute metrics
         im_mse = mse(cropped_reference, cropped_compare)
         im_psnr = psnr(cropped_reference, cropped_compare, data_range=cropped_reference.max() - cropped_reference.min())
-        im_ssim = ssim(cropped_reference, cropped_compare, multichannel=True)
+        im_ssim = ssim(cropped_reference, cropped_compare, win_size=win_size, channel_axis=-1)
 
         metrics.append((float_value, im_mse, im_psnr, im_ssim))
 
     return metrics, float_values
-
 
 def plot_metrics(metrics, float_values):
     """Plot the computed metrics."""
@@ -89,7 +107,6 @@ def plot_metrics(metrics, float_values):
     plt.tight_layout()
     plt.show()
 
-
 def crop_and_compare(reference_image_path, compare_images_folder, output_folder):
     global reference_image
 
@@ -103,7 +120,18 @@ def crop_and_compare(reference_image_path, compare_images_folder, output_folder)
     # Display the image for cropping
     fig, ax = plt.subplots()
     ax.imshow(reference_image)
-    rect_selector = RectangleSelector(ax, select_rectangle, drawtype='box', useblit=True, button=[1], interactive=True)
+
+    # Use the RectangleSelector
+    rect_selector = RectangleSelector(
+        ax,
+        onselect,
+        useblit=True,
+        button=[1],
+        minspanx=5,
+        minspany=5,
+        spancoords='pixels',
+        interactive=True
+    )
     plt.title("Select the region to crop and close the window.")
     plt.show()
 
@@ -114,8 +142,8 @@ def crop_and_compare(reference_image_path, compare_images_folder, output_folder)
     plot_metrics(metrics, float_values)
 
 if __name__ == "__main__":
-    reference_image_path = input("Enter the path to the reference image: ")
-    compare_images_folder = input("Enter the folder containing images to compare: ")
-    output_folder = input("Enter the folder to save cropped images: ")
+    reference_image_path = f"dome_port_test\\reference\\no_dome_port.png"
+    compare_images_folder = f"dome_port_test\\dome_port_focus_distance_cycle"
+    output_folder = f"dome_port_test\\dome_port_focus_distance_cycle\\cropped"
 
     crop_and_compare(reference_image_path, compare_images_folder, output_folder)
