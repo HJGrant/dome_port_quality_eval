@@ -18,8 +18,8 @@ def compute_ssim(img, reference):
 
 def main():
     # Load reference and test images
-    ref_img_path = "dome_port_test\\cropped\\cropped_no_dome_port.png"
-    test_img_path = "dome_port_test\\cropped\\cropped_w_dome_port.png"
+    ref_img_path = "focus_cycle_cropped\cropped_reference.png"
+    test_img_path = "focus_cycle_cropped\cropped_render_focus_distance_0.53.png"
 
     # Load images as grayscale and ensure datatype consistency
     ref_img = cv2.imread(ref_img_path, cv2.IMREAD_GRAYSCALE)

@@ -5,6 +5,7 @@ import numpy as np
 from skimage.metrics import mean_squared_error as mse, peak_signal_noise_ratio as psnr, structural_similarity as ssim
 import matplotlib.pyplot as plt
 from matplotlib.widgets import RectangleSelector
+from tqdm import tqdm
 
 # Global variables for cropping
 cropping_coordinates = None
@@ -36,7 +37,7 @@ def save_cropped_images(cropping_coordinates):
     metrics = []
     float_values = []
 
-    for image_name in os.listdir(compare_images_folder):
+    for image_name in tqdm(os.listdir(compare_images_folder)):
         compare_image_path = os.path.join(compare_images_folder, image_name)
         compare_image = cv2.imread(compare_image_path)
 
@@ -92,17 +93,17 @@ def plot_metrics(metrics, float_values):
     plt.subplot(1, 3, 1)
     plt.plot(sorted_float_values, im_mse, color='blue', marker='o')
     plt.title('Mean Squared Error (MSE)')
-    plt.xlabel('Float Value')
+    plt.xlabel('Focus Distance (m)')
 
     plt.subplot(1, 3, 2)
     plt.plot(sorted_float_values, im_psnr, color='green', marker='o')
     plt.title('Peak Signal-to-Noise Ratio (PSNR)')
-    plt.xlabel('Float Value')
+    plt.xlabel('Focus Distance (m)')
 
     plt.subplot(1, 3, 3)
     plt.plot(sorted_float_values, im_ssim, color='red', marker='o')
     plt.title('Structural Similarity Index (SSIM)')
-    plt.xlabel('Float Value')
+    plt.xlabel('Focus Distance (m)')
 
     plt.tight_layout()
     plt.show()
@@ -142,8 +143,8 @@ def crop_and_compare(reference_image_path, compare_images_folder, output_folder)
     plot_metrics(metrics, float_values)
 
 if __name__ == "__main__":
-    reference_image_path = f"dome_port_test\\reference\\no_dome_port.png"
-    compare_images_folder = f"dome_port_test\\dome_port_focus_distance_cycle"
-    output_folder = f"dome_port_test\\dome_port_focus_distance_cycle\\cropped"
+    reference_image_path = f"test_0.8407m\\reference_image_no_dome_0.8407m.png"
+    compare_images_folder = f"test_0.8407m\\focus_cycle_0.8407m"
+    output_folder = f"test_0.8407m\\focus_cycle_cropped_0.8407m"
 
     crop_and_compare(reference_image_path, compare_images_folder, output_folder)
